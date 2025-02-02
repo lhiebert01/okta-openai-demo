@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Configuration
-app.secret_key = os.getenv("SECRET_KEY", "your-strong-secret-key")
+app.secret_key = os.getenv("SECRET_KEY", secrets.token_hex(32))
 
 # Redis Configuration
 REDIS_URL = os.getenv("REDIS_URL")  # For Render
@@ -43,17 +43,20 @@ app.config['SESSION_KEY_PREFIX'] = 'flask_session:'
 # Try Redis connection
 try:
     if REDIS_URL:  # For Render
+        logger.info(f"Attempting to connect to Redis using URL")
         redis_client = redis.from_url(REDIS_URL)
     else:  # For local development
+        logger.info(f"Attempting to connect to Redis at {REDIS_HOST}:{REDIS_PORT}")
         redis_client = redis.Redis(
             host=REDIS_HOST,
             port=REDIS_PORT,
             password=REDIS_PASSWORD,
-            decode_responses=True
+            decode_responses=True,
+            socket_timeout=5
         )
     
     redis_client.ping()
-    logger.info(f"Connected to Redis at {REDIS_HOST}:{REDIS_PORT}")
+    logger.info("Redis connection successful")
     app.config['SESSION_REDIS'] = redis_client
 
 except redis.ConnectionError as e:
@@ -135,7 +138,7 @@ def get_user_info(access_token):
 @app.route('/')
 @login_required
 def index():
-    user_info = get_user_info(session['access_token'])
+    user_info = get_user_info(session.get('access_token'))
     if not user_info:
         session.clear()
         return redirect(url_for('login'))
@@ -165,10 +168,10 @@ def chat():
         
         chat_response = response.choices[0].message.content
 
-        user_info = get_user_info(session['access_token'])
+        user_info = get_user_info(session.get('access_token'))
         return render_template('index.html',
                              user=user_info,
-                             auth_info={'access_token': session['access_token'],
+                             auth_info={'access_token': session.get('access_token'),
                                       'id_token': session.get('id_token', 'Not found')},
                              okta_domain=OKTA_DOMAIN,
                              client_id=OKTA_CLIENT_ID,
@@ -202,7 +205,9 @@ def login():
         'code_challenge_method': 'S256'
     }
 
-    return redirect(f'{OKTA_ISSUER}/v1/authorize?{urlencode(params)}')
+    auth_url = f'{OKTA_ISSUER}/v1/authorize?{urlencode(params)}'
+    logger.info(f"Authorization URL: {auth_url}")
+    return redirect(auth_url)
 
 @app.route('/callback')
 def callback():
@@ -226,7 +231,7 @@ def callback():
         'redirect_uri': OKTA_REDIRECT_URI,
         'client_id': OKTA_CLIENT_ID,
         'client_secret': OKTA_CLIENT_SECRET,
-        'code_verifier': session['code_verifier']
+        'code_verifier': session.get('code_verifier')
     }
 
     try:

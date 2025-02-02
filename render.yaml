@@ -20,21 +20,11 @@ services:
         value: "https://dev-14162863.okta.com/oauth2/ausn1mvtp8e6ob1VV5d7"
       - key: OPENAI_API_KEY
         sync: false
-      - key: REDIS_HOST
+      - key: REDIS_URL
         fromService:
           type: redis
           name: redis-session
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: redis-session
-          property: port
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: redis-session
-          property: password
+          property: connectionString
 
   - type: redis
     name: redis-session
