@@ -3,6 +3,7 @@ Flask-Session
 requests
 python-dotenv
 openai
+redis
 gunicorn
 cryptography
 Werkzeug
