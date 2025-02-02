@@ -41,9 +41,10 @@ app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'flask_session:'
 
 # Try Redis connection
+
 try:
     if REDIS_URL:  # For Render
-        logger.info(f"Attempting to connect to Redis using URL")
+        logger.info(f"Attempting to connect to Redis using URL: {REDIS_URL}")
         redis_client = redis.from_url(REDIS_URL)
     else:  # For local development
         logger.info(f"Attempting to connect to Redis at {REDIS_HOST}:{REDIS_PORT}")
@@ -58,6 +59,7 @@ try:
     redis_client.ping()
     logger.info("Redis connection successful")
     app.config['SESSION_REDIS'] = redis_client
+    
 
 except redis.ConnectionError as e:
     logger.warning(f"Redis connection failed: {e}. Falling back to filesystem sessions")
