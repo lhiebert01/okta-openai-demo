@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <title>Okta Authentication Demo</title>
+   <style>
+       body {
+           font-family: Arial, sans-serif;
+           max-width: 1200px;
+           margin: 0 auto;
+           padding: 20px;
+           background-color: #f5f5f5;
+       }
+       .welcome-banner {
+           background-color: #4CAF50;
+           color: white;
+           padding: 20px;
+           border-radius: 5px;
+           margin-bottom: 20px;
+           text-align: center;
+       }
+       .auth-info, .user-profile, .debug-info {
+           background-color: #fff;
+           padding: 20px;
+           border-radius: 5px;
+           margin-bottom: 20px;
+           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+       }
+       .token-info {
+           background-color: #f8f9fa;
+           padding: 15px;
+           border-radius: 5px;
+           margin-top: 10px;
+           font-family: monospace;
+           white-space: pre-wrap;
+           word-break: break-all;
+       }
+       .button {
+           padding: 10px 20px;
+           background-color: #007bff;
+           color: white;
+           border: none;
+           border-radius: 5px;
+           cursor: pointer;
+           margin: 5px;
+           text-decoration: none;
+           display: inline-block;
+       }
+       .button:hover {
+           background-color: #0056b3;
+       }
+       .logout {
+           background-color: #dc3545;
+       }
+       .logout:hover {
+           background-color: #c82333;
+       }
+       pre {
+           background-color: #f8f9fa;
+           padding: 15px;
+           border-radius: 5px;
+           overflow-x: auto;
+       }
+       .status-indicator {
+           display: inline-block;
+           padding: 5px 10px;
+           border-radius: 3px;
+           margin-left: 10px;
+       }
+       .success {
+           background-color: #28a745;
+           color: white;
+       }
+       .group-list {
+           list-style: none;
+           padding: 0;
+       }
+       .group-item {
+           background-color: #e9ecef;
+           margin: 5px 0;
+           padding: 10px;
+           border-radius: 5px;
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+       }
+       .author-link {
+           color: white;
+           text-decoration: underline;
+       }
+       .author-link:hover {
+           color: #f0f0f0;
+       }
+       .top-chat {
+           background: rgba(255, 255, 255, 0.1);
+           padding: 20px;
+           border-radius: 8px;
+           margin-top: 20px;
+           max-width: 800px;
+           margin-left: auto;
+           margin-right: auto;
+       }
+       .chat-input {
+           display: flex;
+           gap: 10px;
+           align-items: flex-start;
+       }
+       .chat-input textarea {
+           width: 100%;
+           min-height: 100px;
+           padding: 10px;
+           border-radius: 4px;
+           border: 1px solid #ddd;
+           color: black;
+           background-color: white;
+       }
+       .chat-response {
+           margin-top: 20px;
+           background: white;
+           padding: 15px;
+           border-radius: 4px;
+           text-align: left;
+           color: black;
+           border: 1px solid #ddd;
+       }
+       .response-content {
+           white-space: pre-wrap;
+           font-family: monospace;
+           color: black;
+           background-color: white;
+           padding: 10px;
+           border-radius: 4px;
+       }
+   </style>
+</head>
+<body>
+   <div class="welcome-banner">
+       <h1>🌟 ⚡ 🔐 Welcome to the OKTA + OpenAI: Secure GenAI Web App Demo 🔑 🚀 💫</h1>
+       <h2>Designed by <a href="https://www.linkedin.com/in/lindsayhiebert/" class="author-link">Lindsay Hiebert</a> 
+           (<a href="https://github.com/lhiebert01" class="author-link">GitHub</a>)</h2>
+       
+       {% if user %}
+       <div class="top-chat">
+           <form method="POST" action="{{ url_for('chat') }}" class="chat-form">
+               <div class="chat-input">
+                   <textarea name="prompt" placeholder="Ask ChatGPT anything..." required>{{ last_prompt }}</textarea>
+                   <button type="submit" class="button">Ask ChatGPT</button>
+               </div>
+           </form>
+           {% if chat_response %}
+           <div class="chat-response">
+               <h3 style="color: black;">ChatGPT Response:</h3>
+               <div class="response-content">{{ chat_response }}</div>
+           </div>
+           {% endif %}
+       </div>
+       {% endif %}
+   </div>
+
+   <div class="auth-info">
+       <h2>🔐 Authentication Status</h2>
+       <p>
+           <strong>Status:</strong> 
+           Successfully Authenticated! 
+           <span class="status-indicator success">✓</span>
+       </p>
+       <p><strong>Okta Domain:</strong> {{ okta_domain }}</p>
+       <p><strong>Client ID:</strong> {{ client_id }}</p>
+       
+       <h3>Token Information:</h3>
+       <div class="token-info">
+           <p><strong>Access Token:</strong> {{ auth_info.access_token }}</p>
+           <p><strong>ID Token:</strong> {{ auth_info.id_token }}</p>
+       </div>
+       
+       <div style="margin-top: 20px;">
+           <a href="{{ url_for('logout') }}" class="button logout">Logout</a>
+       </div>
+   </div>
+
+   <div class="user-profile">
+       <h2>👤 User Profile Information</h2>
+       <p><strong>Name:</strong> {{ user.name }}</p>
+       <p><strong>Email:</strong> {{ user.email }}</p>
+       <p><strong>Preferred Username:</strong> {{ user.preferred_username }}</p>
+       
+       <h3>Group Memberships:</h3>
+       <ul class="group-list">
+       {% if user.groups %}
+           {% for group in user.groups %}
+           <li class="group-item">
+               <span>{{ group.name }}</span>
+               <span class="group-type">{{ group.type }}</span>
+           </li>
+           {% endfor %}
+       {% else %}
+           <li class="group-item">No group memberships found</li>
+       {% endif %}
+       </ul>
+       
+       <h3>Complete User Profile:</h3>
+       <pre>{{ user | tojson(indent=2) }}</pre>
+   </div>
+
+   <div class="debug-info">
+       <h2>🔍 Debug Information</h2>
+       <h3>Session Data:</h3>
+       <pre>{{ session | tojson(indent=2) }}</pre>
+   </div>
+
+   <script>
+       document.addEventListener('DOMContentLoaded', function() {
+           const now = new Date();
+           const timestamp = document.createElement('p');
+           timestamp.textContent = `Page loaded at: ${now.toLocaleString()}`;
+           document.querySelector('.debug-info').appendChild(timestamp);
+       });
+   </script>
+</body>
+</html>

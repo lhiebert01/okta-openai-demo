@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: okta-flask-demo
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: OKTA_DOMAIN
+        sync: false
+      - key: OKTA_CLIENT_ID
+        sync: false
+      - key: OKTA_CLIENT_SECRET
+        sync: false
+      - key: OKTA_API_TOKEN
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: OKTA_ISSUER
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
