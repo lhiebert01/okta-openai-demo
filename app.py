@@ -41,11 +41,15 @@ app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'flask_session:'
 
 # Try Redis connection
-
 try:
     if REDIS_URL:  # For Render
-        logger.info(f"Attempting to connect to Redis using URL: {REDIS_URL}")
-        redis_client = redis.from_url(REDIS_URL)
+        logger.info("Attempting to connect to Redis using Render URL")
+        redis_client = redis.from_url(
+            REDIS_URL,
+            decode_responses=True,
+            socket_connect_timeout=5,
+            socket_timeout=5
+        )
     else:  # For local development
         logger.info(f"Attempting to connect to Redis at {REDIS_HOST}:{REDIS_PORT}")
         redis_client = redis.Redis(
@@ -59,7 +63,6 @@ try:
     redis_client.ping()
     logger.info("Redis connection successful")
     app.config['SESSION_REDIS'] = redis_client
-    
 
 except redis.ConnectionError as e:
     logger.warning(f"Redis connection failed: {e}. Falling back to filesystem sessions")
@@ -87,19 +90,52 @@ if not OPENAI_API_KEY:
     logger.error("OPENAI_API_KEY must be set in .env file!")
     raise ValueError("Missing OPENAI_API_KEY")
 
+def validate_token(access_token):
+    try:
+        # Check if token exists
+        if not access_token:
+            return False
+
+        # Get token info from Okta
+        headers = {'Authorization': f'Bearer {access_token}'}
+        response = requests.get(
+            f'{OKTA_ISSUER}/v1/userinfo',
+            headers=headers
+        )
+        
+        # If response is not successful, token is invalid
+        if not response.ok:
+            logger.warning(f"Token validation failed: {response.status_code}")
+            return False
+
+        return True
+    except Exception as e:
+        logger.error(f"Token validation error: {str(e)}")
+        return False
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Check if access token exists in session
+        access_token = session.get('access_token')
+        if not access_token:
+            logger.info("No access token found in session")
+            return redirect(url_for('login'))
+
+        # Validate token with Okta
+        if not validate_token(access_token):
+            logger.info("Token validation failed, clearing session")
+            session.clear()
+            return redirect(url_for('login'))
+
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.before_request
 def before_request():
     session.permanent = True
     logger.info(f"Request URL: {request.url}")
     logger.info(f"Session Data: {dict(session)}")
-
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'access_token' not in session:
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
 
 def get_user_info(access_token):
     try:
@@ -253,9 +289,24 @@ def callback():
 
 @app.route('/logout')
 def logout():
+    # Get id_token for Okta logout
+    id_token = session.get('id_token')
+    
+    # Clear Flask session
     session.clear()
-    logger.info("User logged out.")
-    return redirect(url_for('login'))
+    logger.info("Local session cleared")
+
+    # Construct Okta logout URL
+    params = {
+        'id_token_hint': id_token,
+        'post_logout_redirect_uri': url_for('login', _external=True)
+    }
+    
+    # Redirect to Okta end session endpoint
+    okta_logout_url = f"https://{OKTA_DOMAIN}/oauth2/v1/logout?{urlencode(params)}"
+    logger.info(f"Redirecting to Okta logout: {okta_logout_url}")
+    
+    return redirect(okta_logout_url)
 
 if __name__ == '__main__':
     logger.info("Starting Flask Okta Authentication Demo")
