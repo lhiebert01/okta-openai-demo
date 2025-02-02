@@ -10,6 +10,8 @@ from urllib.parse import urlencode
 from dotenv import load_dotenv
 import logging
 from openai import OpenAI
+import openai
+
 
 # Load environment variables
 load_dotenv(override=True)
