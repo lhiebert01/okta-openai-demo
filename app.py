@@ -43,7 +43,7 @@ OKTA_ISSUER = os.getenv("OKTA_ISSUER", "https://dev-14162863.okta.com/oauth2/aus
 
 # OpenAI Configuration
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=OPENAI_API_KEY)
+openai.api_key = OPENAI_API_KEY 
 
 if not OKTA_CLIENT_SECRET:
    logger.error("OKTA_CLIENT_SECRET must be set in .env file!")
@@ -128,7 +128,7 @@ def chat():
            {"role": "user", "content": prompt}
        ]
        
-       response = client.chat.completions.create(
+       response = openai.chat.completions.create(
            model="gpt-3.5-turbo",
            messages=messages,
            temperature=0.7
