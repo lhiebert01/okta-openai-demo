@@ -40,7 +40,8 @@ Session(app)
 OKTA_DOMAIN = os.getenv("OKTA_DOMAIN", "dev-14162863.okta.com")
 OKTA_CLIENT_ID = os.getenv("OKTA_CLIENT_ID", "0oan1mokxuIokN9Ih5d7")
 OKTA_CLIENT_SECRET = os.getenv("OKTA_CLIENT_SECRET")
-OKTA_REDIRECT_URI = os.getenv("OKTA_REDIRECT_URI", "http://localhost:5000/callback")
+#OKTA_REDIRECT_URI = os.getenv("OKTA_REDIRECT_URI", "http://localhost:5000/callback")
+OKTA_REDIRECT_URI = os.getenv("OKTA_REDIRECT_URI", "https://okta-openai-demo.onrender.com/callback")
 OKTA_ISSUER = os.getenv("OKTA_ISSUER", "https://dev-14162863.okta.com/oauth2/ausn1mvtp8e6ob1VV5d7")
 
 # OpenAI Configuration
