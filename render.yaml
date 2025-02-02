@@ -1,26 +1,31 @@
 services:
   - type: web
-    name: okta-openai-demo
+    name: flask-app
     env: python
-    buildCommand: 
-      - pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
+      - key: SECRET_KEY
+        generateValue: true
       - key: OKTA_DOMAIN
-        value: dev-14162863.okta.com
+        value: "dev-14162863.okta.com"
       - key: OKTA_CLIENT_ID
-        value: 0oan1mokxuIokN9Ih5d7
+        sync: false
       - key: OKTA_CLIENT_SECRET
-        sync: false  # Manually set this in Render Dashboard
+        sync: false
       - key: OKTA_REDIRECT_URI
-        value: https://okta-openai-demo.onrender.com/callback
+        value: "https://okta-openai-demo.onrender.com/callback"
       - key: OKTA_ISSUER
-        value: https://dev-14162863.okta.com/oauth2/ausn1mvtp8e6ob1VV5d7
+        value: "https://dev-14162863.okta.com/oauth2/ausn1mvtp8e6ob1VV5d7"
+      - key: OPENAI_API_KEY
+        sync: false
       - key: REDIS_URL
         fromService:
           type: redis
-          name: okta-openai-redis
+          name: redis-session
+          property: connectionString
 
   - type: redis
-    name: okta-openai-redis
-    plan: starter  # Change to 'pro' if needed for production
+    name: redis-session
+    ipAllowList: []
+    plan: free
