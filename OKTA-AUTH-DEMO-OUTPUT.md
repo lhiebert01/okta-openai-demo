@@ -27,7 +27,7 @@ Ask ChatGPT anything...
 {
   "Name": "JohnSmith-SampleUserName",
   "Email": "JohnSmith-SampleUserName@gmail.com",
-  "Preferred Username": "lindsay.hiebert@gmail.com",
+  "Preferred Username": "JohnSmith-SampleUserName@gmail.com",
   
   "Group Memberships": [
     {
