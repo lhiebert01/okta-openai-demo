@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Okta Authentication Demo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        .token-info {
+            word-break: break-all;
+            font-family: monospace;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Update the header section of index.html -->
+    <div class="container mx-auto px-4 py-8">
+    <!-- Enhanced Welcome Banner -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                    <img src="{{ url_for('static', filename='AppImage.png') }}" alt="App Logo" class="h-16 w-16 mr-4 rounded-lg shadow-lg">
+                    <div>
+                        <h1 class="text-3xl font-bold">
+                            🌟 OKTA + OpenAI: Secure GenAI Web App Demo 🔐
+                        </h1>
+                        <div class="flex items-center mt-2 space-x-3">
+                            <span>Designed by</span>
+                            <a href="https://www.linkedin.com/in/lindsayhiebert/" 
+                            target="_blank" 
+                            class="flex items-center hover:text-blue-200 transition-colors duration-200">
+                                <svg class="h-5 w-5 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                                </svg>
+                                Lindsay Hiebert
+                            </a>
+                            <a href="https://github.com/lhiebert01" 
+                            target="_blank" 
+                            class="flex items-center hover:text-blue-200 transition-colors duration-200">
+                                <svg class="h-5 w-5 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                                </svg>
+                                GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end">
+                    <div class="bg-green-500 text-white px-4 py-2 rounded-full mb-2">
+                        <span class="mr-2">✨</span>Status: Successfully Authenticated!<span class="ml-2">✓</span>
+                    </div>
+                    {% if auth_info.remaining_time %}
+                    <div class="bg-yellow-500 text-white px-4 py-2 rounded-full">
+                        <span class="mr-2">⏱️</span>Session expires in: 
+                        <span id="timeRemaining" class="font-bold">{{ auth_info.remaining_time }}</span>
+                    </div>
+                    {% endif %}
+                    <form action="{{ url_for('logout') }}" method="get" class="mt-2">
+                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded flex items-center">
+                            <span class="mr-2">🚪</span>Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="flex justify-center mt-4 space-x-2 text-sm">
+                <span class="bg-blue-700 px-3 py-1 rounded-full">🔒 Secure Authentication</span>
+                <span class="bg-blue-700 px-3 py-1 rounded-full">🤖 AI-Powered</span>
+                <span class="bg-blue-700 px-3 py-1 rounded-full">🚀 High Performance</span>
+                <span class="bg-blue-700 px-3 py-1 rounded-full">🔥 Real-time Updates</span>
+            </div>
+        </div>
+
+    <!-- Rest of the content remains the same -->
+        <!-- Authentication Status Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-bold mb-6">🔐 Authentication Status</h2>
+            
+            <!-- Okta Configuration -->
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold mb-3">Okta Configuration</h3>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p><span class="font-semibold">Domain:</span> {{ okta_domain }}</p>
+                    <p><span class="font-semibold">Client ID:</span> {{ client_id }}</p>
+                    <p><span class="font-semibold">Redirect URI:</span> {{ auth_info.redirect_uri }}</p>
+                    <p><span class="font-semibold">Issuer:</span> {{ user.auth_details.issuer if user.auth_details else 'N/A' }}</p>
+                </div>
+            </div>
+
+            <!-- Chat Interface -->
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold mb-3">💬 Chat with AI Assistant</h3>
+                <form action="{{ url_for('chat') }}" method="post" class="space-y-4">
+                    <div>
+                        <textarea 
+                            name="prompt" 
+                            rows="4" 
+                            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                            placeholder="Type your message here..."
+                        >{{ last_prompt if last_prompt }}</textarea>
+                    </div>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg transition duration-200">
+                        Send Message
+                    </button>
+                </form>
+                {% if chat_response %}
+                    <div class="mt-6">
+                        <h3 class="font-semibold mb-2">Response:</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            {{ chat_response }}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Token Information -->
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold mb-3">Token Information</h3>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">Access Token:</h4>
+                        <div class="token-info bg-gray-100 p-2 rounded">{{ auth_info.access_token }}</div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">ID Token:</h4>
+                        <div class="token-info bg-gray-100 p-2 rounded">{{ auth_info.id_token }}</div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <p><span class="font-semibold">Authentication Time:</span> {{ user.auth_details.auth_time if user.auth_details else 'N/A' }}</p>
+                            <p><span class="font-semibold">Auth Method:</span> {{ user.auth_details.auth_method if user.auth_details else 'N/A' }}</p>
+                        </div>
+                        <div>
+                            <p><span class="font-semibold">Token Expiry:</span> {{ auth_info.token_expiry }}</p>
+                            <p><span class="font-semibold">ID Token Expiry:</span> {{ user.auth_details.id_token_expiry if user.auth_details else 'N/A' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- User Profile Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-bold mb-6">👤 User Profile Information</h2>
+            
+            <!-- Basic Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <h3 class="text-xl font-semibold mb-3">Basic Information</h3>
+                    <div class="bg-gray-50 p-4 rounded-lg space-y-2">
+                        <p><span class="font-semibold">Name:</span> {{ user.name }}</p>
+                        <p><span class="font-semibold">First Name:</span> {{ user.given_name }}</p>
+                        <p><span class="font-semibold">Last Name:</span> {{ user.family_name }}</p>
+                        <p><span class="font-semibold">Email:</span> {{ user.email }}</p>
+                        <p><span class="font-semibold">Username:</span> {{ user.preferred_username }}</p>
+                        <p><span class="font-semibold">Locale:</span> {{ user.locale }}</p>
+                        <p><span class="font-semibold">Timezone:</span> {{ user.zoneinfo }}</p>
+                        <p><span class="font-semibold">User ID:</span> {{ user.sub }}</p>
+                    </div>
+                </div>
+                
+                <!-- Additional Profile Details -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-3">Additional Details</h3>
+                    <div class="bg-gray-50 p-4 rounded-lg space-y-2">
+                        {% if user.profile %}
+                            {% if user.profile.mobilePhone %}
+                                <p><span class="font-semibold">Mobile Phone:</span> {{ user.profile.mobilePhone }}</p>
+                            {% endif %}
+                            {% if user.profile.title %}
+                                <p><span class="font-semibold">Title:</span> {{ user.profile.title }}</p>
+                            {% endif %}
+                            {% if user.profile.department %}
+                                <p><span class="font-semibold">Department:</span> {{ user.profile.department }}</p>
+                            {% endif %}
+                            {% if user.profile.manager %}
+                                <p><span class="font-semibold">Manager:</span> {{ user.profile.manager }}</p>
+                            {% endif %}
+                            {% if user.profile.location %}
+                                <p><span class="font-semibold">Location:</span> {{ user.profile.location }}</p>
+                            {% endif %}
+                            {% for key, value in user.profile.items() %}
+                                {% if key not in ['mobilePhone', 'title', 'department', 'manager', 'location', 'login', 'email'] %}
+                                    <p><span class="font-semibold">{{ key|title }}:</span> {{ value }}</p>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group Memberships -->
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold mb-3">Group Memberships</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% if user.groups %}
+                        {% for group in user.groups %}
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="font-semibold">{{ group.name }}</p>
+                                <p class="text-sm text-gray-600">Type: {{ group.type }}</p>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>No group memberships found</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Raw Profile Data -->
+            <div>
+                <h3 class="text-xl font-semibold mb-3">Complete Profile Data</h3>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <pre class="text-sm">{{ user | tojson(indent=2) }}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Information -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-6">🔍 Debug Information</h2>
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="text-lg font-semibold mb-3">Session Data</h3>
+                <pre class="text-sm">{{ session | tojson(indent=2) }}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function checkTokenStatus() {
+            fetch('/token_status')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.valid) {
+                        window.location.href = '/token_expired';
+                    } else {
+                        document.getElementById('timeRemaining').textContent = data.remaining_formatted;
+                    }
+                });
+        }
+
+        // Check token status every 5 minutes (300000 milliseconds)
+        setInterval(checkTokenStatus, 300000);
+
+        // Add timestamp to debug info
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const timestamp = document.createElement('div');
+            timestamp.className = 'mt-4 text-gray-600';
+            timestamp.textContent = `Page loaded at: ${now.toLocaleString()}`;
+            document.querySelector('.bg-white:last-child').appendChild(timestamp);
+        });
+    </script>
+</body>
+</html>
