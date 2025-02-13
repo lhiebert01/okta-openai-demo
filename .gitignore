@@ -65,3 +65,17 @@ temp/
 # Local development
 *.sqlite
 *.db
+
+app2.py
+app3Gold.py
+app3a.py
+appGoldLocal.py
+appRenderGold.py
+appV1Gold.py
+indexGoldLocal.html
+indexRenderGold.html
+requirementsGoldLocal.txt
+templates/index1a.html
+templates/index2.html
+test.py
+
